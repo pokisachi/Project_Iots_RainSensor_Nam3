@@ -1,0 +1,174 @@
+<%- include('../partial/header.ejs') %>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Thông tin cảm biến</h1>
+                    </div><!-- /.col -->
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                            <li class="breadcrumb-item active">Thông tin cảm biến</li>
+                        </ol>
+                    </div><!-- /.col -->
+                </div><!-- /.row -->
+            </div><!-- /.container-fluid -->
+        </div>
+        <!-- /.content-header -->
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Cập nhật dữ liệu</h3>
+                            </div>
+                            <div class="card-body table-responsive p-0">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label>ID=<%=id%></label>                                        
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Nhiệt độ</label>
+                                        <input type="text" class="form-control" id="nhietdo">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Độ ẩm</label>
+                                        <input type="text" class="form-control" id="doam">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Vị trí</label>
+                                        <input type="text" class="form-control" id="vitri">
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="button" class="btn btn-info btn-flat" id="capnhat">Cập nhật</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Bảng thông tin cảm biến</h3>
+                        </div>
+                        <!-- /.card-header -->
+                        <div class="card-body table-responsive p-0">
+                            <table class="table table-hover text-nowrap">
+                                <thead>
+                                    <tr>
+                                        <th>Ngày</th>
+                                        <th>Thời gian</th>
+                                        <th>Nhiệt độ</th>
+                                        <th>Độ ẩm</th>
+                                        <th>Vị trí</th>
+                                        <th>Chức năng</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tb_list">
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                    <!-- /.card -->
+                </div>
+            </div>
+
+
+
+
+    </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+
+    <%- include('../partial/scripts.ejs') %>
+
+        <script>
+            $(document).ready(function () {
+
+                getList();
+                getCambien();
+
+                $("#capnhat").click(function () {
+                    $.ajax({
+                        url: 'http://localhost:8282/api/cambien/<%=id%>',
+                        type: 'put',
+                        dataType: 'JSON',
+                        data: {
+                            'nhietdo': $('#nhietdo').val(),
+                            'doam': $('#doam').val(),
+                            'vitri': $('#vitri').val()
+                        }
+                    }).done(function (result) {
+                        //resetControl();
+                        alert(result.message);                         
+                        getList();
+                    });
+
+                });
+
+
+
+            });
+
+            function resetControl() {
+                $('#nhietdo').val('');
+                $('#doam').val('');
+                $('#vitri').val('');
+            }
+
+            function getList() {
+                $.ajax({
+                    url: 'http://localhost:8282/api/cambien',
+                    type: 'get',
+                    dataType: 'JSON'
+                }).done(function (result) {
+                    if (result) {
+                        resData = "";
+                        result.forEach(el => {
+                            resData += "<tr id= " + el.id + "><td>" + el.ngaynhan + "</td><td>" + el.gionhan + "</td>" +
+                                "<td>" + el.nhietdo + "</td>" +
+                                "<td>" + el.doam + "</td>" +
+                                "<td>" + el.vitri + "</td>" +
+                                "<td><a href='/cambien/update?id=" + el.id + "'>Cập nhật</a>/Xóa</td>" +
+                                "</tr>";
+                        });
+
+                        $("#tb_list").html(resData)
+
+                    }
+                });
+            }
+
+
+            function getCambien() {
+                $.ajax({
+                    url: 'http://localhost:8282/api/cambien/<%=id%>',
+                    type: 'get',
+                    dataType: 'JSON'
+                }).done(function (result) {
+                    if (result) {                        
+                        $('#nhietdo').val(result.nhietdo);
+                        $('#doam').val(result.doam);
+                        $('#vitri').val(result.vitri);
+                    }
+                });
+            }
+
+        </script>
+
+
+        <%- include('../partial/footer.ejs') %>

@@ -1,0 +1,116 @@
+<%- include('./partial/header.ejs') %>
+<div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Dashboard</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">Dashboard</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card card-primary card-outline">
+          <div class="card-header">
+            <h3 class="card-title"><i class="far fa-chart-bar"></i> Biểu Đồ</h3>
+            <div class="card-tools">
+              <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+              <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
+          <div class="card-body">
+            <canvas id="chartMua"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <%- include('./partial/scripts.ejs') %>
+    <script>
+    $(document).ready(function(){
+      getContent();
+    });
+
+    function getContent(){
+      $.ajax({
+        url: "http://localhost:8282/api/cambien",
+        type: "GET",
+        crossDomain: true,
+        success: function(data) {
+          var ctxMua = document.getElementById('chartMua').getContext('2d');
+          var dataRet = tach_dl(data);
+          drawChart(dataRet[0], dataRet[1], ctxMua, 'line');
+        },
+        error: function(xhr, status, error) {
+          console.error("Error fetching data: " + error);
+        }
+      });
+    }
+
+    function tach_dl(data) {
+      var labels = [];
+      var values = [];
+      data.forEach(el => {
+        labels.push(el.ngaynhan + ' ' + el.gionhan);
+        values.push(el.mua === 'Rain' ? 1 : 0.5);
+      });
+      return [labels, values];
+    }
+
+    function drawChart(labels, data, ctx, chartType) {
+      new Chart(ctx, {
+        type: chartType,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Xanh là Mưa/ Cam là Khô',
+            data: data,
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: data.map(value => value === 1 ? 'rgb(0, 0, 255)' : 'rgb(255, 0, 0)'),
+            tension: 0.1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: false,
+              suggestedMin: 0.4,
+              suggestedMax: 1.1
+          }
+        }
+      }
+    });
+  }
+
+  const socket = io('http://localhost:8282');
+  socket.on('connect', () => {
+    console.log('Socket.IO connection established.');
+  });
+  socket.on('disconnect', () => {
+    console.log('Socket.IO connection closed.');
+  });
+  socket.on('message', (data) => {
+    console.log('Received message from server:', data);
+  });
+  socket.on('error', (error) => {
+    console.error('Socket.IO error:', error);
+  });
+
+  // Trong background script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log("Message received:", message);
+    // Xử lý thông điệp tại đây
+    sendResponse({status: "Received"}); // Gửi phản hồi
+    return true; // Biểu thị rằng phản hồi sẽ được gửi một cách bất đồng bộ
+});
+
+  </script>
+</div>
+<%- include('./partial/footer.ejs') %>

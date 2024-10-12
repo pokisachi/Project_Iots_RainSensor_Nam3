@@ -1,0 +1,223 @@
+<%- include('../partial/header.ejs') %>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Thông tin cảm biến</h1>
+                    </div><!-- /.col -->
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                            <li class="breadcrumb-item active">Thông tin cảm biến</li>
+                        </ol>
+                    </div><!-- /.col -->
+                </div><!-- /.row -->
+            </div><!-- /.container-fluid -->
+        </div>
+        <!-- /.content-header -->
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Thêm dữ liệu mới</h3>
+                            </div>
+                            <div class="card-body table-responsive p-0">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label>Mưa</label>
+                                        <input type="text" class="form-control" id="mua">
+                                    </div>
+                                    <!-- <div class="form-group">
+                                        <label>Độ ẩm</label>
+                                        <input type="text" class="form-control" id="doam">
+                                    </div> -->
+                                    <div class="form-group">
+                                        <label>Vị trí</label>
+                                        <input type="text" class="form-control" id="vitri">
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="button" class="btn btn-info btn-flat" id="themmoi">Thêm
+                                            mới</button>
+                                        <button type="button" class="btn btn-info btn-flat" onclick="turnsensor()"
+                                            id="turnsensor">Tắt cảm biến</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Bảng thông tin cảm biến</h3>
+                        </div>
+                        <!-- /.card-header -->
+                        <div class="card-body table-responsive p-0">
+                            <table class="table table-hover text-nowrap">
+                                <thead>
+                                    <tr>
+                                        <th>Ngày</th>
+                                        <th>Thời gian</th>
+                                        <th>Mưa/Không Mưa</th>  
+                                        <th>Vị trí</th>
+                                        <th>Chức năng</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tb_list">
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- /.card-body -->
+                    </div>
+                    <!-- /.card -->
+                </div>
+            </div>
+
+
+
+
+    </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+
+    <%- include('../partial/scripts.ejs') %>
+
+        <script>
+            $(document).ready(function () {
+                getList();
+                $("#themmoi").click(function () {
+                    $.ajax({
+                        url: 'http://localhost:8282/api/cambien',
+                        type: 'post',
+                        dataType: 'JSON',
+                        data: {
+                            'mua': $('#mua').val(),
+                            // 'doam': $('#doam').val(),
+                            'vitri': $('#vitri').val()
+                        }
+                    }).done(function (result) {
+                        resetControl();
+                        alert("Thêm thành công");
+                        //console.log(result);
+                        //getList();
+                        resData = "";
+                        resData += "<tr id= " + result.id + "><td>" + result.ngaynhan + "</td><td>" + result.gionhan + "</td>" +
+                            "<td>" + result.mua + "</td>" +
+                            // "<td>" + result.doam + "</td>" +
+                            "<td>" + result.vitri + "</td>" +
+                            "<td>Cập nhật/Xóa</td>" +
+                            "</tr>";
+                        $("#tb_list").prepend(resData);
+
+
+
+
+
+                    });
+
+                });
+
+
+
+            });
+
+            function resetControl() {
+                $('#mua').val('');
+                // $('#doam').val('');
+                $('#vitri').val('');
+            }
+
+            function getList() {
+                $.ajax({
+                    url: 'http://localhost:8282/api/cambien',
+                    type: 'get',
+                    dataType: 'JSON'
+                }).done(function (result) {
+                    if (result) {
+                        resData = "";
+                        result.forEach(el => {
+                            resData += "<tr id= " + el.id + "><td>" + el.ngaynhan + "</td><td>" + el.gionhan + "</td>" +
+                                "<td>" + el.mua + "</td>" +
+                                // "<td>" + el.doam + "</td>" +
+                                "<td>" + el.vitri + "</td>" +
+                                "<td><a href='/cambien/update?id=" + el.id + "'>Cập nhật</a></td>" +    
+                               "<td><button class='delete-btn' data-id='" + el.id + "'>Xóa</button></td>" +
+                                "</tr>";
+                        });
+
+                        $("#tb_list").html(resData)
+
+                    }
+                });
+            }
+
+          
+
+            // Function to toggle sensor status
+function turnsensor() {
+    var status = localStorage.getItem('sensorStatus') || '0'; // Ensure string comparison for consistency
+    var actionUrl = status === '0' ? 'http://localhost:3000/stop' : 'http://localhost:3000/start';
+
+    $.ajax({
+        url: actionUrl,
+        type: 'GET'
+    }).done(function(result) {
+        // Toggle the status
+        status = status === '0' ? '1' : '0';
+        localStorage.setItem('sensorStatus', status); // Save the new status to localStorage
+
+        // Update button text based on new status
+        $("#turnsensor").text(status === '1' ? "Mở cảm biến" : "Tắt cảm biến");
+    });
+}
+
+// Function to initialize the sensor button on page load
+function initializeSensorButton() {
+    var status = localStorage.getItem('sensorStatus') || '0'; // Ensure string comparison for consistency
+    $("#turnsensor").text(status === '0' ? "Tắt cảm biến" : "Mở cảm biến");
+}
+
+// Call initialize function on page load
+$(document).ready(function() {
+    initializeSensorButton();
+    // Setup button click event handler
+    $('#turnsensor').click(turnsensor);
+});
+
+
+            $(document).on('click', '.delete-btn', function () {
+    var id = $(this).data('id');
+    // Bỏ dấu chấm phẩy ở cuối câu lệnh if
+    if (confirm('Bạn có chắc chắn muốn xóa cảm biến này?')) {
+        $.ajax({
+            url: 'http://localhost:8282/api/cambien/' + id,
+            type: 'delete',
+            dataType: 'JSON'
+        }).done(function (result) {
+            $('#' + id).remove();
+            resetControl();
+            alert("Xóa thành công");
+        }).fail(function (error) {
+            alert("Xóa thất bại: " + error.responseText);
+        });
+    }
+});
+
+          
+        </script>
+
+
+        <%- include('../partial/footer.ejs') %>
